@@ -14,14 +14,12 @@ class ProfileService
      * Profil részletes adatainak lekérdezése.
      *
      * @param int $profileId
-     * @param User $user
      * @return array
      * @throws Exception
      */
-    public function getProfileDetail(int $profileId, User $user): array
+    public function getProfileDetail(int $profileId): array
     {
         $profile = Profile::where('id', $profileId)
-            ->where('user_id', $user->id)
             ->first();
 
         if (!$profile) {

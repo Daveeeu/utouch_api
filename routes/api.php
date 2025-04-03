@@ -1,8 +1,8 @@
 <?php
 
 // routes/api.php
-use App\Http\Controllers\Api\CardController;
-use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\API\CardController;
+use App\Http\Controllers\API\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\AuthController;
 
@@ -27,7 +27,7 @@ Route::middleware('auth:sanctum')->prefix('cards')->group(function () {
     Route::delete('/{id}', [CardController::class, 'destroy']);
 });
 
-Route::middleware('auth:sanctum')->prefix('profiles')->group(function () {
+Route::prefix('profiles')->group(function () {
     Route::get('/{id}', [ProfileController::class, 'show']);
     Route::post('/{id}', [ProfileController::class, 'update']);
     Route::post('/check-url', [ProfileController::class, 'checkCustomUrl']);

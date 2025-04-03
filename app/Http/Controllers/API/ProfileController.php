@@ -33,13 +33,12 @@ class ProfileController extends Controller
      * Profil adatok lekérdezése.
      *
      * @param int $id
-     * @param Request $request
      * @return JsonResponse
      */
-    public function show(int $id, Request $request): JsonResponse
+    public function show(int $id): JsonResponse
     {
         try {
-            $profile = $this->profileService->getProfileDetail($id, $request->user());
+            $profile = $this->profileService->getProfileDetail($id);
 
             return response()->json([
                 'success' => true,
