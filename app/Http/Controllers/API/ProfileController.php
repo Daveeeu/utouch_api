@@ -38,7 +38,7 @@ class ProfileController extends Controller
     public function show(int $id): JsonResponse
     {
         try {
-            $profile = $this->profileService->getProfileDetail($id);
+            $profile = $this->profileService->getProfileDetail($id, false);
 
             return response()->json([
                 'success' => true,

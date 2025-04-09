@@ -32,3 +32,18 @@ Route::prefix('profiles')->group(function () {
     Route::post('/{id}', [ProfileController::class, 'update']);
     Route::post('/check-url', [ProfileController::class, 'checkCustomUrl']);
 });
+
+// Profil kezelő útvonalak az új ProfileManagerController-hez
+Route::middleware('auth:sanctum')->prefix('profiles')->group(function () {
+    // Profilok listázása
+    Route::get('/', [\App\Http\Controllers\API\ProfileManagerController::class, 'index']);
+
+    // Új profil létrehozása
+    Route::post('/', [\App\Http\Controllers\API\ProfileManagerController::class, 'store']);
+
+    // Profil kártyához kapcsolása
+    Route::post('/{id}/link', [\App\Http\Controllers\API\ProfileManagerController::class, 'linkToCard']);
+
+    // Profil törlése
+    Route::delete('/{id}', [\App\Http\Controllers\API\ProfileManagerController::class, 'destroy']);
+});
