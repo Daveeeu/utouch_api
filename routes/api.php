@@ -29,7 +29,6 @@ Route::middleware('auth:sanctum')->prefix('cards')->group(function () {
 
 Route::prefix('profiles')->group(function () {
     Route::get('/{id}', [ProfileController::class, 'show']);
-    Route::post('/{id}', [ProfileController::class, 'update']);
     Route::post('/check-url', [ProfileController::class, 'checkCustomUrl']);
 });
 
@@ -38,8 +37,9 @@ Route::middleware('auth:sanctum')->prefix('profiles')->group(function () {
     // Profilok listázása
     Route::get('/', [\App\Http\Controllers\API\ProfileManagerController::class, 'index']);
 
-    // Új profil létrehozása
     Route::post('/', [\App\Http\Controllers\API\ProfileManagerController::class, 'store']);
+
+    Route::post('/{id}', [ProfileController::class, 'update']);
 
     // Profil kártyához kapcsolása
     Route::post('/{id}/link', [\App\Http\Controllers\API\ProfileManagerController::class, 'linkToCard']);
