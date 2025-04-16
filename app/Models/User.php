@@ -7,10 +7,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -58,5 +59,21 @@ class User extends Authenticatable
     public function cards(): HasMany
     {
         return $this->hasMany(Card::class);
+    }
+
+    /**
+     * Teljes név getter
+     */
+    public function getFullNameAttribute(): string
+    {
+        return "{$this->first_name} {$this->last_name}";
+    }
+
+    /**
+     * Admin-e a felhasználó
+     */
+    public function isAdmin(): bool
+    {
+        return $this->hasRole('admin');
     }
 }

@@ -49,7 +49,7 @@ class CardService
             );
 
             // Kártya aktiválása
-            $success = $card->activate($user->id, $profile->id);
+            $success = $card->activateCard($user->id, $profile->id);
 
             if (!$success) {
                 throw new Exception('Nem sikerült aktiválni a kártyát.');

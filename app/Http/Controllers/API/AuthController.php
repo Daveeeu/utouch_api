@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -127,6 +128,23 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Sikeres kijelentkezés'
+        ]);
+    }
+
+    /**
+     * Felhasználói jogosultságok lekérdezése
+     */
+    public function permissions(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        // Spatie Laravel Permission csomag használatával
+        $permissions = $user->getPermissionNames()->toArray();
+        $roles = $user->getRoleNames()->toArray();
+
+        return response()->json([
+            'permissions' => $permissions,
+            'roles' => $roles
         ]);
     }
 }
