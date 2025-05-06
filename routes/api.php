@@ -35,6 +35,7 @@ Route::middleware('auth:sanctum')->prefix('cards')->group(function () {
 Route::prefix('profiles')->group(function () {
     Route::get('/{id}', [ProfileController::class, 'show']);
     Route::post('/check-url', [ProfileController::class, 'checkCustomUrl']);
+    Route::get('/{id}/seo', [ProfileController::class, 'getSeoSettings'])->name('profiles.seo');
 });
 
 // Profil kezelő útvonalak az új ProfileManagerController-hez
