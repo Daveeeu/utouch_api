@@ -324,16 +324,16 @@ class ProfileService
                 $basicData['image'] = $profileData['photo'];
             }
 
-            // Kontakt adatok, közösségi média, multimédia és beállítások JSON-ként tárolása
+            // Egyéb adatok JSON mezőkbe
             $extraData = [
                 'contact_info' => isset($profileData['contacts']) ? json_encode($profileData['contacts']) : $profile->contact_info,
                 'social_links' => isset($profileData['socialProfiles']) ? json_encode($profileData['socialProfiles']) : $profile->social_links,
             ];
 
-            // További adatok bővített JSON mezőként tárolása
+            // Meta adatok kezelése
             $metaData = json_decode($profile->meta_data ?? '{}', true) ?: [];
 
-            // Alap adatok META mezőbe mentése (redundancia a könnyebb lekérdezésért)
+            // Alap adatok META mezőbe mentése
             $metaData['firstName'] = $profileData['firstName'] ?? null;
             $metaData['lastName'] = $profileData['lastName'] ?? null;
             $metaData['jobTitle'] = $profileData['jobTitle'] ?? null;
@@ -344,35 +344,19 @@ class ProfileService
                 $metaData['multimedia'] = $profileData['multimedia'];
             }
 
-            // Portfólió képek hozzáadása, ha vannak
-            if (isset($profileData['portfolioImages'])) {
-                $metaData['multimedia']['portfolioItems'] = array_map(
-                    function ($item, $index) use ($profileData, $metaData) {
-                        // Az eredeti portfolioItems tömb megőrzése
-                        $originalItems = $metaData['multimedia']['portfolioItems'] ?? [];
-
-                        // Megkeressük az adott indexű elemet, vagy üres tömböt használunk
-                        $existingItem = $originalItems[$index] ?? [];
-
-                        // Egyesítjük a meglévő és új adatokat, az új kép URL-t felülírva
-                        return array_merge($existingItem, $profileData['portfolioImages'][$index] ?? []);
-                    },
-                    $profileData['portfolioImages'],
-                    array_keys($profileData['portfolioImages'])
-                );
-            }
-
-            // Dokumentumok hozzáadása, ha vannak
-            if (isset($profileData['documents'])) {
-                $metaData['multimedia']['documents'] = array_merge(
-                    $metaData['multimedia']['documents'] ?? [],
-                    $profileData['documents']
-                );
-            }
-
             // Beállítások mentése
             if (isset($profileData['settings'])) {
                 $metaData['settings'] = $profileData['settings'];
+            }
+
+            // SEO beállítások mentése
+            if (isset($profileData['seoSettings'])) {
+                $metaData['seo'] = $profileData['seoSettings'];
+
+                // Ha van OG kép fájl feltöltés, frissítjük az URL-t
+                if (isset($profileData['ogImageFile'])) {
+                    $metaData['seo']['ogImage'] = $profileData['ogImageFile'];
+                }
             }
 
             $extraData['meta_data'] = json_encode($metaData);
@@ -392,24 +376,6 @@ class ProfileService
     }
 
     /**
-     * Ellenőrzi, hogy az egyedi URL elérhető-e.
-     *
-     * @param string $customUrl
-     * @param int|null $excludeProfileId
-     * @return bool
-     */
-    public function isCustomUrlAvailable(string $customUrl, ?int $excludeProfileId = null): bool
-    {
-        $query = Profile::whereRaw("JSON_EXTRACT(meta_data, '$.settings.customUrl') = ?", [$customUrl]);
-
-        if ($excludeProfileId) {
-            $query->where('id', '!=', $excludeProfileId);
-        }
-
-        return $query->count() === 0;
-    }
-
-    /**
      * Profil adatok formázása a frontend számára.
      *
      * @param Profile $profile
@@ -420,18 +386,25 @@ class ProfileService
         // Meta adatok kinyerése
         $metaData = json_decode($profile->meta_data ?? '{}', true) ?: [];
 
-        // Név szétbontása vezeték és keresztnévre
+        // Eddigi adatformázás...
         $name = explode(' ', $profile->name ?? '', 2);
         $firstName = $metaData['firstName'] ?? ($name[1] ?? '');
         $lastName = $metaData['lastName'] ?? ($name[0] ?? '');
-
-        // Kontakt adatok deserialization
         $contacts = json_decode($profile->contact_info ?? '[]', true) ?: [];
-
-        // Közösségi média linkek deserialization
         $socialProfiles = json_decode($profile->social_links ?? '[]', true) ?: [];
 
-        // Formázott profil adatok
+        // Alapértelmezett SEO beállítások
+        $defaultSeoSettings = [
+            'metaTitle' => '',
+            'metaDescription' => '',
+            'keywords' => '',
+            'useCustomSocial' => false,
+            'ogTitle' => '',
+            'ogDescription' => '',
+            'ogImage' => '',
+            'noIndex' => false
+        ];
+
         return [
             'id' => $profile->id,
             'name' => $profile->name,
@@ -455,9 +428,31 @@ class ProfileService
                     'theme' => 'default',
                     'language' => 'hu_HU'
                 ],
+            'seoSettings' => array_merge($defaultSeoSettings, $metaData['seo'] ?? []),
             'visits' => $profile->visits,
             'createdAt' => $profile->created_at,
             'updatedAt' => $profile->updated_at
         ];
     }
+
+
+    /**
+     * Ellenőrzi, hogy az egyedi URL elérhető-e.
+     *
+     * @param string $customUrl
+     * @param int|null $excludeProfileId
+     * @return bool
+     */
+    public function isCustomUrlAvailable(string $customUrl, ?int $excludeProfileId = null): bool
+    {
+        $query = Profile::whereRaw("JSON_EXTRACT(meta_data, '$.settings.customUrl') = ?", [$customUrl]);
+
+        if ($excludeProfileId) {
+            $query->where('id', '!=', $excludeProfileId);
+        }
+
+        return $query->count() === 0;
+    }
+
+
 }

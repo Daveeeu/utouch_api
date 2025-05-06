@@ -7,6 +7,7 @@ use App\Models\Profile;
 use App\Services\ProfileService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Exception;
 
@@ -66,7 +67,9 @@ class ProfileController extends Controller
             'socialProfiles' => is_string($request->socialProfiles) ? json_decode($request->socialProfiles, true) : $request->socialProfiles,
             'multimedia' => is_string($request->multimedia) ? json_decode($request->multimedia, true) : $request->multimedia,
             'settings' => is_string($request->settings) ? json_decode($request->settings, true) : $request->settings,
+            'seoSettings' => is_string($request->seoSettings) ? json_decode($request->seoSettings, true) : $request->seoSettings,
         ]);
+
         $request->validate([
             'firstName' => 'nullable|string|max:100',
             'lastName' => 'nullable|string|max:100',
@@ -76,13 +79,22 @@ class ProfileController extends Controller
             'contacts' => 'nullable|array',
             'socialProfiles' => 'nullable|array',
             'multimedia' => 'nullable|array',
-            'settings' => 'nullable|array'
+            'settings' => 'nullable|array',
+            'seoSettings' => 'nullable|array',
+            'seoSettings.metaTitle' => 'nullable|string|max:60',
+            'seoSettings.metaDescription' => 'nullable|string|max:160',
+            'seoSettings.keywords' => 'nullable|string|max:200',
+            'seoSettings.ogTitle' => 'nullable|string|max:60',
+            'seoSettings.ogDescription' => 'nullable|string|max:160',
+            'seoSettings.ogImage' => 'nullable|string|max:255',
+            'seoSettings.noIndex' => 'nullable|boolean',
+            'seoSettings.useCustomSocial' => 'nullable|boolean',
         ]);
 
         try {
             $profileData = $request->only([
                 'firstName', 'lastName', 'jobTitle', 'company', 'bio',
-                'contacts', 'socialProfiles', 'multimedia', 'settings'
+                'contacts', 'socialProfiles', 'multimedia', 'settings', 'seoSettings'
             ]);
 
             // Profilkép feltöltése, ha van
@@ -90,15 +102,12 @@ class ProfileController extends Controller
                 $profileData['photo'] = $this->uploadProfilePhoto($request);
             }
 
-            // Dokumentumok feltöltése, ha vannak
-            if ($request->hasFile('documents')) {
-                $profileData['documents'] = $this->uploadDocuments($request);
+            // SEO kép feltöltése, ha van
+            if ($request->hasFile('ogImage')) {
+                $profileData['ogImageFile'] = $this->uploadOgImage($request);
             }
 
-            // Portfólió képek feltöltése, ha vannak
-            if ($request->hasFile('portfolioImages')) {
-                $profileData['portfolioImages'] = $this->uploadPortfolioImages($request);
-            }
+            Log::info(json_encode($request->all()));
 
             $profile = $this->profileService->updateProfile($id, $profileData, $request->user());
 
@@ -114,6 +123,43 @@ class ProfileController extends Controller
             ], 400);
         }
     }
+
+    /**
+     * Open Graph kép feltöltése.
+     *
+     * @param Request $request
+     * @return string
+     */
+    private function uploadOgImage(Request $request): string
+    {
+        $file = $request->file('ogImage');
+        $path = $file->store('og-images', 'public');
+        return Storage::url($path);
+    }
+
+    /**
+     * SEO beállítások lekérdezése.
+     *
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function getSeoSettings(int $id): JsonResponse
+    {
+        try {
+            $profile = $this->profileService->getProfileById($id);
+
+            return response()->json([
+                'success' => true,
+                'seoSettings' => $profile['seoSettings'] ?? null
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 404);
+        }
+    }
+
 
     /**
      * Egyedi URL ellenőrzése.
