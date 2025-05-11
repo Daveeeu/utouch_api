@@ -74,4 +74,4 @@ Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     Route::get('statistics/user-growth', [AdminStatisticsController::class, 'userGrowth']);
 });
 
-Route::post('/activity-logs', [ActivityLogsController::class, 'store'])->middleware('auth:sanctum');
+Route::post('/activity-logs', [ActivityLogsController::class, 'store']);

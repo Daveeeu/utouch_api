@@ -33,6 +33,17 @@ class ActivityLogsController extends Controller
 
         // Get authenticated user if available
         $user = $request->user();
+        $token = $request->bearerToken();
+
+        if ($token && !$user) {
+            try {
+                $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
+                if ($accessToken) {
+                    $user = $accessToken->tokenable;
+                }
+            } catch (\Exception $e) {
+            }
+        }
         // Process all logs in the batch
         foreach ($request->logs as $log) {
             activity('frontend')
